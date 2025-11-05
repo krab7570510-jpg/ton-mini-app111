@@ -1,0 +1,2967 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Стильное меню с вкладками</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Глобальное правило для правильного расчета ширины */
+  *, ::before, ::after {
+    box-sizing: border-box;
+  }
+  
+  :root{
+    --gold1:#ffd700;
+    --gold2:#d0aa5b;
+    --panel-bg: linear-gradient(180deg,#4a4a4a 0%,#3a3a3a 100%);
+    --glass: rgba(30,30,30,0.95);
+  }
+  html,body{height:100%;margin:0;font-family:'Poppins',sans-serif;background:linear-gradient(180deg,#3a3a3a 0%,#2c2c2c 100%);color:#f5f5f5;}
+  .app { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+  .tabs { flex:1; padding:12px; box-sizing:border-box; padding-bottom:140px; overflow:auto; -webkit-overflow-scrolling:touch; }
+
+  .tab { display:none; }
+  .tab.active { display:block; }
+
+  /* карточки (премиум стиль) */
+  .section-box{
+    background: var(--panel-bg);
+    border:1px solid rgba(255,255,255,0.04);
+    border-radius:18px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5), inset 0 0 10px rgba(255,255,255,0.03);
+    padding:18px;
+    max-width:420px;
+    margin:14px auto;
+    position:relative;
+  }
+  h3{ margin:0 0 10px; color:var(--gold2); font-size:20px; text-align:center; font-weight:600; letter-spacing:0.3px; }
+  p { margin:0 0 12px; color:#d9d9d9; text-align:center; font-size:14px; }
+
+  /* promo */
+  .promo-input{ display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap; }
+  .promo-input input{
+    width:180px;padding:12px;border-radius:10px;border:1px solid #777;background:#2f2f2f;color:#f5f5f5;text-align:center;outline:none;
+  }
+  .promo-input button{
+    background:linear-gradient(180deg,var(--gold2),#b4873e); border:none;color:#fff;padding:11px 16px;border-radius:10px;font-weight:600;cursor:pointer;
+    box-shadow:0 6px 18px rgba(180,140,60,0.15);
+  }
+  .promo-message{ text-align:center;margin-top:10px;font-weight:600; display:none; }
+
+
+
+  /* ads */
+  #ads-progress-bar{
+    width:100%; height:14px; background:#2f2f2f; border-radius:8px; overflow:hidden; margin-top:10px;
+  }
+  #ads-progress-bar-inner{
+    width:0%; height:100%; background:linear-gradient(90deg,var(--gold1),var(--gold2)); border-radius:8px; position:relative; overflow:hidden;
+  }
+  #ads-progress-bar-inner::before{ content:''; position:absolute; top:0; left:-50%; width:50%; height:100%; background:linear-gradient(120deg, rgba(255,255,255,0.35), rgba(255,255,255,0.07), rgba(255,255,255,0.35)); animation:shine 2s linear infinite; }
+  @keyframes shine{ 0%{left:-50%}100%{left:100%} }
+
+  .watch-btn{ width:100%; padding:12px 0; border-radius:12px; border:none; font-weight:600; cursor:pointer; color:#fff; background:linear-gradient(180deg,var(--gold1),var(--gold2)); box-shadow:0 6px 20px rgba(255,215,0,0.15); }
+
+  /* balance row */
+  .balance-top{ display:flex; justify-content:center; gap:14px; align-items:center; margin:6px 0 6px; }
+  .balance-top img{ width:28px;height:28px; display:inline-block; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
+  .balance-top .bal{ font-weight:700;color:var(--gold1); font-size:15px; min-width:36px; text-align:center; }
+
+  /* riddle */
+  .riddle-box{ background: linear-gradient(145deg,#ffd70022,#d0aa5b22); border-radius:16px; padding:14px; box-shadow:0 6px 18px rgba(208,170,91,0.06); color:var(--gold1); font-weight:600; text-align:center; }
+  .riddle-input{ display:flex; justify-content:center; gap:10px; margin-top:10px; }
+  .riddle-input input{ padding:10px;border-radius:10px;border:1px solid #777;background:#2f2f2f;color:#fff;text-align:center; width:180px; }
+  .riddle-input button{ padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(180deg,var(--gold1),var(--gold2));color:#111;font-weight:700;cursor:pointer; }
+
+  /* coins animation */
+  .fall-coin{ position:fixed; pointer-events:auto; z-index:9999; font-size:26px; user-select:none; text-shadow:0 0 8px rgba(255,215,0,0.6); }
+  .fall-coin.ton{ text-shadow:0 0 8px rgba(180,180,180,0.6); }
+  .fall-coin.usdt{ text-shadow:0 0 8px rgba(0,200,100,0.6); }
+
+  /* tabs bottom */
+  .tab-buttons{
+    position:fixed; left:0; bottom:0; width:100%; display:flex; justify-content:space-around; align-items:center;
+    background:var(--glass); padding:10px 8px; box-shadow:0 -8px 30px rgba(0,0,0,0.6); border-radius:16px 16px 0 0; z-index:200;
+  }
+  .tab-btn{ flex:1; background:none;border:none;color:var(--gold2); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 6px; min-height:56px; }
+  .tab-btn:focus{ outline:none; }
+  .tab-btn .emoji{ font-size:30px; line-height:1; display:block; pointer-events:none; }
+  .tab-btn .label{ font-size:12px; color:var(--gold2); }
+  .tab-btn.active .emoji{ text-shadow:0 0 10px rgba(255,215,0,0.9); }
+  .tab-btn.active .label{ color:var(--gold1); font-weight:700; }
+  .tab-btn.active{ background:radial-gradient(circle at top, rgba(255,215,0,0.08), transparent); border-radius:12px; }
+
+  @media (max-width:420px){
+    .section-box{ margin:12px 10px; }
+    .promo-input input, .riddle-input input{ width:130px; }
+    .tab-btn .emoji{ font-size:26px; }
+    .tab-btn .label{ font-size:11px; }
+  }
+
+  .ripple{ position:absolute; border-radius:50%; transform:translate(-50%, -50%); pointer-events:none; width:8px; height:8px; background: rgba(255,255,255,0.12); animation:ripple 400ms linear forwards; }
+  @keyframes ripple{ to{ width:120px; height:120px; opacity:0; } }
+  .msg { transition:opacity .25s ease; opacity:1; }
+
+  /* Daily login box */
+  #daily-login-box {
+    background: linear-gradient(135deg,#ffd70022,#d0aa5b22);
+    border:1px solid rgba(255,215,0,0.15);
+    box-shadow: 0 8px 25px rgba(255,215,0,0.25);
+    padding:16px;
+  }
+  #daily-login-btn {
+    width:100%;
+    padding:12px 0;
+    border-radius:12px;
+    background: linear-gradient(180deg,#ffd700,#d0aa5b);
+    border:none;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:6px;
+    color:#111;
+    box-shadow:0 6px 20px rgba(255,215,0,0.5);
+    font-size:16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  #daily-login-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,215,0,0.4);
+  }
+  .day-cell {
+    width:50px; height:50px; background:#2f2f2f; border-radius:10px;
+    text-align:center; color:#f5f5f5; font-size:12px;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    border:1px solid rgba(255,215,0,0.2); box-shadow: inset 0 0 8px rgba(255,215,0,0.05);
+  }
+  .day-cell.active { background: linear-gradient(180deg,#ffd700,#d0aa5b); color:#111; font-weight:700; border:1px solid #ffd700; box-shadow:0 0 10px rgba(255,215,0,0.7); }
+  .day-cell img { width:18px; margin-bottom:2px; }
+
+/* =========================
+   Премиум стиль блока
+========================= */
+.premium-section{
+  background: linear-gradient(145deg,#303030,#252525); 
+  border-radius:20px;
+  padding:20px;
+  margin:20px auto;
+  max-width:480px; /* Главное ограничение ширины */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 0 10px rgba(255,255,255,0.03);
+  font-family: 'Poppins', sans-serif;
+  color: #f5f5f5; 
+}
+
+.premium-section h2{
+  font-weight:700;
+  margin-bottom:18px;
+  color:var(--gold1);
+  text-align:center;
+}
+
+.conversion{
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:12px;
+  justify-content:center;
+}
+
+.coin-icon{
+  width:20px;
+  height:20px;
+}
+
+.withdraw-form input{
+  width:100%;
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:12px;
+  border:2px solid #555;
+  background:#1e1e1e;
+  color:#f5f5f5;
+  font-size:16px;
+  font-weight:500;
+}
+
+.withdraw-form input.error-field{
+  border-color:#E53935;
+}
+
+.amount-row{
+  display:flex;
+  gap:6px;
+}
+
+.amount-row input{
+  flex:1;
+}
+
+.amount-row button{
+  flex:none;
+  background:linear-gradient(180deg,#ffd700,#d0aa5b);
+  border:none;
+  border-radius:12px;
+  padding:10px 14px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.withdraw-form button#withdraw-btn{
+  width:100%;
+  background:linear-gradient(180deg,#ffd700,#d0aa5b);
+  border:none;
+  padding:14px 0;
+  border-radius:16px;
+  font-weight:700;
+  font-size:16px;
+  cursor:pointer;
+  box-shadow:0 6px 20px rgba(255,215,0,0.5);
+  margin-top:6px;
+}
+
+.withdraw-message{
+  margin-top:8px;
+  font-weight:600;
+  min-height:20px;
+  text-align:center;
+}
+
+
+/* Анимация DOGS */
+.fall-dogscoin{
+  position:fixed;
+  pointer-events:none;
+  z-index:9999;
+  width:32px;
+  height:32px;
+  background-image:url('dogscoin.png');
+  background-size:contain;
+  background-repeat:no-repeat;
+}
+
+/* 💼 Премиальный стиль кошелька */
+.wallet-container {
+  text-align: center;
+  padding: 25px;
+  font-family: 'Poppins', sans-serif;
+  color: #fff;
+}
+
+.wallet-title {
+  font-size: 1.8em;
+  font-weight: 600;
+  margin-bottom: 25px;
+  background: linear-gradient(90deg, #ffd700, #ffcc33);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(255,215,0,0.4);
+}
+
+.wallet-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  align-items: center;
+}
+
+.wallet-card {
+  position: relative;
+  width: 90%;
+  max-width: 420px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 25px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 0 25px rgba(255,255,255,0.08);
+  overflow: hidden;
+  transition: 0.3s ease;
+}
+
+.wallet-card::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at top left, rgba(255,255,255,0.1), transparent 60%);
+  transform: rotate(25deg);
+}
+
+.wallet-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 0 35px rgba(255,255,255,0.2);
+}
+
+.wallet-icon {
+  width: 60px;
+  height: 60px;
+  z-index: 2;
+}
+
+.wallet-info {
+  text-align: right;
+  z-index: 2;
+}
+
+.wallet-name {
+  display: block;
+  font-size: 1.1em;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.wallet-balance {
+  font-size: 1.6em;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 8px rgba(255,255,255,0.2);
+}
+
+/* Цветовые темы карточек */
+.wallet-card.gold {
+  /* Темный, насыщенный фон */
+  background: linear-gradient(135deg, #383115, #1f1b0a);
+  /* Яркая золотая рамка */
+  border: 1px solid #ffd700;
+  /* Сильное золотое свечение */
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.4), inset 0 0 10px rgba(255,255,255,0.05);
+}
+
+.wallet-card.usdt {
+  background: linear-gradient(135deg, #26a17b20, #1e7e6120);
+  border: 1px solid #26a17b60;
+}
+
+.wallet-card.ton {
+  background: linear-gradient(135deg, #0098ea20, #006bbd20);
+  border: 1px solid #0098ea60;
+}
+
+/* Стилизация самого числа баланса монет (новое) */
+.wallet-card.gold .wallet-balance {
+    font-size: 1.8em; /* Немного крупнее */
+    font-weight: 800; /* Жирнее */
+    /* Золотой градиент для текста с эффектом свечения */
+    background: linear-gradient(90deg, #ffd700, #ffcc33);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 10px rgba(255,215,0,0.8);
+}
+
+/* =========================
+   История операций (History)
+========================= */
+.history-section h2 {
+    margin-bottom: 12px;
+}
+.filter-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* Разрешаем перенос кнопок для узких экранов */
+}
+.filter-btn {
+    padding: 8px 14px;
+    border: 1px solid var(--gold2);
+    border-radius: 12px;
+    background: #252525;
+    color: var(--gold2);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.filter-btn.active {
+    background: linear-gradient(180deg, var(--gold1), var(--gold2));
+    color: #111;
+    border-color: var(--gold1);
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(255,215,0,0.3);
+}
+.history-table-container {
+    overflow-x: auto; /* ЭТО обеспечивает горизонтальную прокрутку */
+    width: 100%; /* Убеждаемся, что он не шире родителя (.premium-section) */
+    margin-top: 15px;
+    -webkit-overflow-scrolling: touch; /* Для лучшей прокрутки на iOS */
+}
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 450px; /* СНИЖЕНО: минимальная ширина для прокрутки, можно сделать 100% и убрать max-width у td, но скролл лучше */
+    font-size: 12px;
+    text-align: left;
+}
+.history-table th {
+    color: var(--gold1);
+    padding: 10px 8px;
+    border-bottom: 2px solid var(--gold2);
+    font-weight: 600;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+.history-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    white-space: nowrap; /* Запрещает перенос текста, чтобы сохранить ширину */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60px; /* УМЕНЬШЕНО для экономии места */
+}
+.history-table tbody tr:hover {
+    background: rgba(255,215,0,0.05);
+}
+.history-amount-plus { color: #4CAF50; font-weight: 600; }
+.history-amount-minus { color: #F44336; font-weight: 600; }
+.history-amount-neutral { color: #9E9E9E; }
+
+/* СКРЫТИЕ КОЛОНОК НА УЗКИХ ЭКРАНАХ */
+@media (max-width: 380px) {
+    /* Скрываем колонки "Кошелек" и "MEMO" для максимальной экономии места */
+    .history-table th:nth-child(5), 
+    .history-table td:nth-child(5),
+    .history-table th:nth-child(6), 
+    .history-table td:nth-child(6) {
+        display: none;
+    }
+    
+    /* Дополнительно уменьшаем минимальную ширину таблицы */
+    .history-table {
+        min-width: 100%; 
+    }
+}
+@media (max-width: 420px) {
+  /* Переопределяем min-width для .premium-section, если нужно, чтобы отступы были меньше */
+  .premium-section {
+    padding: 15px; 
+    margin: 15px 10px;
+  }
+}
+
+/* ======================================================== */
+/* СТИЛЬ: ЕЖЕДНЕВНОЕ КОМБО (Daily Combo) */
+/* ======================================================== */
+.combo-card {
+  width: 65px !important; 
+  height: 80px !important;
+  background: #252525 !important;
+  border-radius: 15px !important;
+  border: 2px solid var(--gold2) !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 0 8px rgba(255,215,0,0.05) !important;
+  transition: all 0.3s ease-in-out !important;
+  position: relative !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  /* Центрирование контента */
+  display: flex !important; 
+  flex-direction: column !important; 
+  justify-content: center !important; 
+  align-items: center !important;
+}
+
+.combo-card:hover {
+  transform: scale(1.08);
+  border-color: var(--gold1) !important;
+  box-shadow: 0 0 20px rgba(255,215,0,0.3), inset 0 0 10px rgba(255,215,0,0.1);
+}
+
+/* Элемент: Изображение внутри карточки */
+.combo-card .symbol-display { 
+    width: 85%; 
+    height: 85%; 
+    object-fit: contain; 
+    z-index: 2; 
+    border-radius: 8px; 
+    pointer-events: none; 
+}
+
+/* Стили для наложения с вопросительным знаком */
+.combo-card .card-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  background: rgba(0,0,0,0.9) !important;
+  border-radius: 12px;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  font-size: 32px !important;
+  color: var(--gold1) !important;
+  transition: opacity 0.3s ease !important;
+  box-shadow: inset 0 0 10px rgba(255,215,0,0.2);
+}
+
+/* Состояние: Выбрана (без overlay) */
+.combo-card.selected .card-overlay {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Состояние: Правильная карта */
+.combo-card.correct {
+  background: linear-gradient(135deg, #4CAF50, #2E7D32) !important;
+  border-color: #A5D6A7 !important;
+  box-shadow: 0 0 25px rgba(76, 175, 80, 0.6) !important;
+  color: #fff !important;
+}
+
+/* Состояние: Неправильная карта */
+.combo-card.incorrect {
+  background: #401010 !important;
+  border-color: #E53935 !important;
+  box-shadow: 0 0 15px rgba(229, 57, 53, 0.4) !important;
+  opacity: 1 !important;
+}
+
+/* СЕТКА 4 КОЛОНКИ ДЛЯ КАРТОЧЕК */
+#combo-cards {
+    display: grid !important; 
+    grid-template-columns: repeat(4, 1fr) !important; 
+    gap: 12px !important; 
+    max-width: 350px !important; 
+    margin: 15px auto !important; 
+}
+/* ======================================================== */
+
+/* ============================================================
+   🎮 ПРЕМИУМ СТИЛЬ: ИГРЫ (стаканчики, кубики, орел и решка, рулетка)
+============================================================ */
+#games-section {
+  margin-top: 25px;
+  background: linear-gradient(145deg,#303030,#252525);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 10px rgba(255,255,255,0.05);
+  padding: 20px 15px;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+#games-section h3 {
+  color: var(--gold1);
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(255,215,0,0.5);
+  margin-bottom: 8px;
+}
+#games-section p {
+  color: #ccc;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.game-card {
+  background: linear-gradient(145deg,#3a3a3a,#2a2a2a);
+  border: 1px solid rgba(255,215,0,0.15);
+  border-radius: 16px;
+  padding: 18px 0;
+  color: var(--gold1);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.game-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(255,215,0,0.3);
+}
+
+/* === Модалка самой игры === */
+.game-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+.game-modal-overlay.open {
+  display: flex;
+}
+.game-modal-content {
+  background: linear-gradient(160deg,#1a1a1a,#333);
+  border: 2px solid var(--gold1);
+  border-radius: 20px;
+  padding: 25px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(255,215,0,0.6);
+  width: 280px;
+  height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.game-visual {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 10px;
+  position: relative;
+}
+.game-status-text {
+  font-weight: 600;
+  color: var(--gold1);
+  font-size: 16px;
+  margin-top: 10px;
+  animation: blink 1s infinite alternate;
+}
+@keyframes blink {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}
+
+/* === Анимации мини-игр === */
+.cups-container {
+  position: relative;
+  width: 200px;
+  height: 80px;
+}
+.cup {
+  position: absolute;
+  bottom: 0;
+  width: 40px;
+  height: 60px;
+  background: linear-gradient(180deg,#555,#222);
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+}
+.coin-under {
+  position: absolute;
+  bottom: 5px;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle at 30% 30%, gold, #b88a00);
+  border-radius: 50%;
+  left: 50px;
+}
+@keyframes shuffle {
+  from { transform: translateX(0); }
+  to { transform: translateX(120px); }
+}
+.cup.lift { animation: liftUp 1s forwards; }
+@keyframes liftUp { to { transform: translateY(-40px); } }
+
+.dice {
+  width: 60px;
+  height: 60px;
+  background: #fff;
+  color: #000;
+  font-weight: 700;
+  font-size: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(255,255,255,0.4);
+}
+
+.coin-flip {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(180deg,#FFD700,#B8860B);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow: 0 0 20px rgba(255,215,0,0.6);
+}
+.coin-flip.spinning {
+  animation: coinSpin 0.6s linear infinite;
+}
+@keyframes coinSpin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+.roulette-wheel {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid var(--gold1);
+  background: conic-gradient(
+    #ffcc00 0 30deg,
+    #222 30deg 60deg,
+    #ffcc00 60deg 90deg,
+    #222 90deg 120deg,
+    #ffcc00 120deg 150deg,
+    #222 150deg 180deg,
+    #ffcc00 180deg 210deg,
+    #222 210deg 240deg,
+    #ffcc00 240deg 270deg,
+    #222 270deg 300deg,
+    #ffcc00 300deg 330deg,
+    #222 330deg 360deg
+  );
+  box-shadow: 0 0 30px rgba(255,215,0,0.4);
+}
+
+/* === Модальное окно награды === */
+.reward-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.reward-modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.reward-content {
+  background: linear-gradient(160deg,#1a1a1a,#333);
+  border: 3px solid var(--gold1);
+  border-radius: 20px;
+  padding: 25px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(255,215,0,0.8);
+  animation: pulse 1.5s infinite alternate;
+  max-width: 320px;
+}
+.premium-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--gold1);
+  text-shadow: 0 0 12px rgba(255,215,0,0.6);
+  margin-bottom: 12px;
+}
+.reward-amount {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.reward-icon {
+  width: 48px;
+  height: 48px;
+  animation: spin 1.3s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));
+}
+@keyframes pulse {
+  from { box-shadow: 0 0 30px rgba(255,215,0,0.7); }
+  to { box-shadow: 0 0 45px rgba(255,215,0,1); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.close-reward-btn {
+  margin-top: 20px;
+  background: linear-gradient(180deg,#555,#333);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.close-reward-btn:hover {
+  opacity: 0.8;
+}
+
+/* === Модальное окно награды === */
+.reward-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.reward-modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.reward-content {
+  background: linear-gradient(160deg,#1a1a1a,#333);
+  border: 3px solid var(--gold1);
+  border-radius: 20px;
+  padding: 25px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(255,215,0,0.8);
+  animation: pulse 1.5s infinite alternate;
+  max-width: 320px;
+}
+.premium-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--gold1);
+  text-shadow: 0 0 12px rgba(255,215,0,0.6);
+  margin-bottom: 12px;
+}
+.reward-amount {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.reward-icon {
+  width: 48px;
+  height: 48px;
+  animation: spin 1.3s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));
+}
+@keyframes pulse {
+  from { box-shadow: 0 0 30px rgba(255,215,0,0.7); }
+  to { box-shadow: 0 0 45px rgba(255,215,0,1); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.close-reward-btn {
+  margin-top: 20px;
+  background: linear-gradient(180deg,#555,#333);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.close-reward-btn:hover {
+  opacity: 0.8;
+}
+
+/* === Новые игровые кнопки (выбор цвета / стороны) === */
+.side-btn, .color-btn {
+  background: linear-gradient(145deg,#3a3a3a,#222);
+  border: 2px solid var(--gold1);
+  color: var(--gold1);
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin: 5px;
+}
+.side-btn:hover, .color-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 15px rgba(255,215,0,0.4);
+}
+.color-btn.red {
+  color: #ff4444;
+  border-color: #ff4444;
+}
+.color-btn.black {
+  color: #aaa;
+  border-color: #aaa;
+}
+.vs-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold1);
+  margin: 0 10px;
+}
+.dice-battle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+
+ /* Премиум стиль вкладки "Задания" в твоей структуре */
+  #tab-3 {
+    padding: 14px;
+    color: #f5f5f5;
+  }
+
+  .task-section {
+    background: var(--panel-bg);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 18px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5), inset 0 0 10px rgba(255,255,255,0.03);
+    padding: 18px;
+    max-width: 420px;
+    margin: 14px auto;
+    position: relative;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold1);
+    text-align: center;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255,215,0,0.3);
+  }
+
+  .task-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    transition: all .2s ease;
+  }
+
+  .task-item:hover {
+    background: rgba(255,255,255,0.06);
+    transform: scale(1.01);
+  }
+
+  .task-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #eaeaea;
+  }
+
+  .task-info img {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 0 8px rgba(255,215,0,0.2);
+  }
+
+  .task-buttons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .task-btn {
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+  }
+
+  .btn-check {
+    background: linear-gradient(180deg,var(--gold1),var(--gold2));
+    color: #111;
+    box-shadow: 0 4px 14px rgba(255,215,0,0.25);
+  }
+  .btn-check:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 16px rgba(255,215,0,0.4);
+  }
+
+  .btn-done {
+    background: linear-gradient(145deg, #28a745, #1e7a33);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(40,167,69,0.25);
+  }
+  .btn-done:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 16px rgba(40,167,69,0.45);
+  }
+
+  .reward {
+    font-size: 12px;
+    color: #d6c48a;
+    margin-top: 3px;
+  }
+
+  @media (max-width:420px) {
+    .task-item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .task-buttons {
+      align-self: flex-end;
+      margin-top: 8px;
+    }
+  }
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================
+   НОВЫЙ СТИЛЬ: ВАЛЮТНЫЙ РЯД (TICKET)
+   ========================= */
+.currency-row {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 15px 20px;
+    background: var(--panel-bg);
+    border-radius: 18px;
+    margin: 14px auto;
+    max-width: 420px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5), inset 0 0 10px rgba(255,255,255,0.03);
+}
+
+.currency-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #f5f5f5;
+}
+.currency-info img { 
+    width: 32px; 
+    height: 32px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+}
+.currency-info .bal {
+    color: var(--gold1); 
+    font-size: 20px; 
+    font-weight: 700;
+}
+
+.plus-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+.plus-btn img {
+    width: 36px;
+    height: 36px;
+    filter: drop-shadow(0 0 10px rgba(255,215,0,0.8));
+    transition: transform 0.2s;
+}
+.plus-btn img:active {
+    transform: scale(0.9);
+}
+
+
+/* =========================
+   НОВЫЙ СТИЛЬ: МОДАЛЬНОЕ ОКНО ПОКУПКИ
+   ========================= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    display: none; /* Скрыто по умолчанию */
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.modal-overlay.open {
+    display: flex !important;
+}
+
+.buy-tickets-modal-content {
+    background: var(--panel-bg);
+    border: 2px solid var(--gold2);
+    border-radius: 25px;
+    padding: 25px;
+    max-width: 350px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(255, 215, 0, 0.1);
+    transform: scale(0.9);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+}
+
+.modal-overlay.open .buy-tickets-modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--gold2);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.buy-input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    border: 2px solid #555;
+    background: #1e1e1e;
+    color: #f5f5f5;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    outline: none;
+}
+
+.buy-btn {
+    width: 100%;
+    background: linear-gradient(180deg, #26a17b, #1e7e61); /* Зеленый для USDT покупки */
+    border: none;
+    padding: 14px 0;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(38, 161, 123, 0.5);
+    margin-top: 10px;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.buy-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+/* Стиль для анимации 'Ticket' (предполагаем, что ticket.png - это изображение) */
+.fall-coin.ticket {
+    background-image: url('ticket.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 30px;
+    height: 30px;
+    text-shadow: none;
+    color: transparent; 
+    filter: drop-shadow(0 0 8px rgba(0, 150, 255, 0.6)); /* Голубая тень */
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="sound-toggle" style="position:fixed;right:12px;top:10px;z-index:300;">
+    <button id="sound-btn" style="background:none;border:none;color:#ffd700;font-size:20px;cursor:pointer;padding:8px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.4);">🔊</button>
+  </div>
+  <div class="tabs" id="main-tabs">
+    <div id="tab-1" class="tab active">
+      <div class="balance-top">
+        <img src="Coin.png" alt="Coin"><div class="bal" id="coin-balance">0</div>
+        <img src="Toncoin.png" alt="TON"><div class="bal" id="ton-balance">0.00</div>
+        <img src="USDT.png" alt="USDT"><div class="bal" id="usdt-balance">0.00</div>
+      </div>
+      <div class="section-box" id="promo-box">
+        <h3>🎁 Промокод</h3>
+        <p>Введите промокод для активации бонуса</p>
+        <div class="promo-input">
+          <input id="promo" placeholder="Введите код">
+          <button id="promo-apply">Применить</button>
+        </div>
+        <div id="promo-message" class="promo-message"></div>
+      </div>
+      <div class="section-box" id="ads-box">
+        <h3>📺 Просмотр рекламы</h3>
+        <p>Ежедневно можно просмотреть до <strong>20</strong> реклам. Каждая просмотренная реклама — +1 Coin</p>
+        <button id="watch-ad-btn" class="watch-btn">▶ Смотреть</button>
+        <div id="ads-progress-bar"><div id="ads-progress-bar-inner"></div></div>
+        <p style="text-align:center;color:var(--gold1);margin-top:8px;">Просмотрено: <span id="ads-count">0</span>/20</p>
+      </div>
+      <div class="section-box riddle-box" id="riddle-section">
+        <h3>🧩 Загадка дня</h3>
+        <p id="riddle-question">Что имеет ключи, но не может открыть ни одну дверь?</p>
+        <div class="riddle-input">
+          <input id="riddle-answer" placeholder="Ваш ответ">
+          <button id="riddle-btn">Ответить</button>
+        </div>
+        <div id="riddle-msg" style="margin-top:10px;display:none;" class="msg"></div>
+      </div>
+      <div class="section-box" id="daily-login-box">
+        <h3>🎉 Ежедневный вход</h3>
+        <p>Смотрите видео и получайте бонусы каждый день!</p>
+        <div id="daily-rewards" style="display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin:12px 0;">
+          <div class="day-cell" data-day="1"><img src="coin.png" style="width:18px;"> 1</div>
+          <div class="day-cell" data-day="2"><img src="coin.png" style="width:18px;"> 2</div>
+          <div class="day-cell" data-day="3"><img src="coin.png" style="width:18px;"> 3</div>
+          <div class="day-cell" data-day="4"><img src="coin.png" style="width:18px;"> 4</div>
+          <div class="day-cell" data-day="5"><img src="coin.png" style="width:18px;"> 5</div>
+          <div class="day-cell" data-day="6"><img src="coin.png" style="width:18px;"> 6</div>
+          <div class="day-cell" data-day="7"><img src="coin.png" style="width:18px;"> 7</div>
+        </div>
+        <button id="daily-login-btn">ПОЛУЧИТЬ БОНУС</button>
+      </div>
+
+
+        
+
+<div class="section-box">
+  <h3>🎁 Ежедневное Комбо</h3>
+  <p>Соберите комбо и получите +5 Coin, +0.05 USDT </p>
+  
+  <div id="combo-cards">
+    </div>
+
+  <p id="combo-message" style="margin-top:15px; font-weight:600; text-align:center;"></p>
+  <p id="combo-next-reset" style="font-size:12px; color:#aaa; text-align:center;"></p>
+</div>
+
+</div>
+
+
+
+
+    <div id="tab-2" class="tab">
+
+      <div class="currency-row">
+        <div class="currency-info">
+          <img src="ticket.png" alt="Ticket">
+          <span>Баланс:</span>
+          <div class="bal" id="ticket-balance">0</div>
+          <span>Ticket</span>
+        </div>
+        <button id="open-buy-tickets-modal" class="plus-btn">
+          <img src="plus.png" alt="Пополнить">
+        </button>
+      </div>
+<!-- 🎮 Премиальные мини-игры -->
+<div class="section-box" id="games-section">
+  <h3>🎰 Игровой Центр</h3>
+  <p>Стоимость каждой игры: <strong>1 Ticket</strong></p>
+
+  <div class="games-grid">
+    <button class="game-card" data-game="cups">🎩 Стаканчики</button>
+    <button class="game-card" data-game="dice">🎲 Кубики</button>
+    <button class="game-card" data-game="coinflip">🪙 Орел и решка</button>
+    <button class="game-card" data-game="roulette">🎡 Рулетка</button>
+  </div>
+</div>
+
+<!-- 🪩 Окно самой игры -->
+<div class="game-modal-overlay" id="game-modal">
+  <div class="game-modal-content" id="game-modal-content">
+    <div class="game-visual" id="game-visual"></div>
+    <p id="game-status" class="game-status-text"></p>
+  </div>
+</div>
+
+<!-- 🎁 Окно награды -->
+<div class="reward-modal-overlay" id="reward-modal">
+  <div class="reward-content">
+    <div class="premium-title" id="reward-title">Поздравляем!</div>
+    <div class="reward-amount" id="reward-amount"></div>
+    <button class="close-reward-btn" id="close-reward-btn">Закрыть</button>
+  </div>
+</div>
+
+ </div>
+
+
+
+
+<div id="tab-3" class="tab">
+
+
+  <!-- Ежедневные -->
+  <div class="task-section">
+    <div class="section-title"><span class="emoji">📅</span> Ежедневные задания</div>
+
+    <div class="task-item" data-task="visit-channel">
+      <div class="task-info">
+        <span>🔗 Посетить канал</span>
+      </div>
+      <div class="task-buttons">
+        <a href="https://t.me/testkanal1921" target="_blank" class="task-btn btn-check">Перейти</a>
+        <button class="task-btn btn-done">Выполнено</button>
+      </div>
+    </div>
+
+    <div class="task-item" data-task="visit-chat">
+      <div class="task-info">
+        <span>💬 Посетить чат</span>
+      </div>
+      <div class="task-buttons">
+        <a href="https://t.me/testchat19191" target="_blank" class="task-btn btn-check">Перейти</a>
+        <button class="task-btn btn-done">Выполнено</button>
+      </div>
+    </div>
+
+    <div class="task-item" data-task="play-game">
+      <div class="task-info">
+        <span>🎮 Сыграй в 1 игру</span>
+      </div>
+      <div class="task-buttons">
+        <button class="task-btn btn-check">Играть</button>
+        <button class="task-btn btn-done">Выполнено</button>
+      </div>
+    </div>
+
+    <div class="task-item" data-task="watch-ad">
+      <div class="task-info">
+        <span>📺 Посмотри 1 рекламу</span>
+      </div>
+      <div class="task-buttons">
+        <button class="task-btn btn-check">Смотреть</button>
+        <button class="task-btn btn-done">Выполнено</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Подписка -->
+  <div class="task-section">
+    <div class="section-title"><span class="emoji">📢</span> Подписаться на канал</div>
+
+    <div class="task-item" data-task="daily-combo">
+      <div class="task-info">
+        <img src="Crypto_Daily_Combo_bot.png" alt="">
+        <div>
+          Dayli Combo
+          <div class="reward">Награда: +5 Coin</div>
+        </div>
+      </div>
+      <div class="task-buttons">
+        <a href="https://t.me/Crypto_Daily_Combo_bot" target="_blank" class="task-btn btn-check">Перейти</a>
+        <button class="task-btn btn-done">Проверка</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Мини игры -->
+  <div class="task-section">
+    <div class="section-title"><span class="emoji">🎮</span> Мини-игры</div>
+
+    <div class="task-item" data-task="labrador">
+      <div class="task-info">
+        <img src="labrador.png" alt="">
+        <div>
+          Labrador Adventures
+          <div class="reward">Награда: +5 Coin</div>
+        </div>
+      </div>
+      <div class="task-buttons">
+        <a href="https://t.me/LabradorAdventuresBot/start?startapp=ref_ZGWD9UA40Y" target="_blank" class="task-btn btn-check">Играть</a>
+        <button class="task-btn btn-done">Выполнено</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    <div id="tab-4" class="tab">
+      <div class="wallet-container">
+        <h1 class="wallet-title">Мой Кошелек</h1>
+        <button id="connect-ton-wallet" style="padding:10px 15px; border-radius:12px; background:linear-gradient(180deg,#00c8ff,#006bbd); color:#fff; font-weight:600; cursor:pointer;">Подключить TON кошелек</button>
+        <p id="ton-wallet-address" style="margin-top:6px; font-size:14px; opacity:0.8;"></p>
+        <div class="wallet-grid">
+          <div class="wallet-card gold">
+            <img src="Coin.png" class="wallet-icon" alt="Coin">
+            <div class="wallet-info">
+              <span class="wallet-name">Coins</span>
+              <span class="wallet-balance" id="coinBalance">0</span>
+            </div>
+          </div>
+          <div class="wallet-card ton">
+            <img src="Toncoin.png" class="wallet-icon" alt="TON">
+            <div class="wallet-info">
+              <span class="wallet-name">TON</span>
+              <span class="wallet-balance" id="tonBalance">0.00</span>
+            </div>
+          </div>
+          <div class="wallet-card usdt">
+            <img src="USDT.png" class="wallet-icon" alt="USDT">
+            <div class="wallet-info">
+              <span class="wallet-name">USDT</span>
+              <span class="wallet-balance" id="usdtBalance">0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="premium-section" style="margin-top:25px; max-width:420px;">
+          <h2>🪙 Вывод Coin</h2>
+          <div class="conversion">
+            <span style="color:#f5f5f5;">Курс: 1000 Coin = 0.5 TON</span>
+          </div>
+          <div class="withdraw-form">
+            <label for="withdraw-ton" style="display:block;margin-bottom:5px;text-align:left;font-size:14px;color:var(--gold2);">Адрес TON кошелька:</label>
+            <input type="text" id="withdraw-ton" placeholder="UQ... или EQ..." value="">
+
+            <label for="withdraw-amount" style="display:block;margin-bottom:5px;text-align:left;font-size:14px;color:var(--gold2);">Сумма Coin:</label>
+            <div class="amount-row">
+              <input type="number" id="withdraw-amount" placeholder="Введите сумму Coin" min="1000">
+              <button id="withdraw-max">MAX</button>
+            </div>
+            
+            <label for="withdraw-memo" style="display:block;margin-top:10px;margin-bottom:5px;text-align:left;font-size:14px;color:var(--gold2);">MEMO (необязательно):</label>
+            <input type="text" id="withdraw-memo" placeholder="Комментарий">
+
+            <button id="withdraw-btn">ВЫВЕСТИ COIN</button>
+            <div id="withdraw-message" class="withdraw-message" style="display:none;"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="premium-section" style="margin-top:20px; max-width:420px;">
+          <h2>📊 История Операций</h2>
+          <div id="history-filters" class="filter-buttons">
+              <button class="filter-btn active" data-filter="all">Все</button>
+              <button class="filter-btn" data-filter="reward">Награды</button>
+              <button class="filter-btn" data-filter="withdraw">Выводы</button>
+          </div>
+          <div class="history-table-container">
+              <table class="history-table" id="transaction-history-table">
+                  <thead>
+                      <tr>
+                          <th>Дата</th>
+                          <th>Сумма</th>
+                          <th>Валюта</th>
+                          <th>Тип</th>
+                          <th>Кошелек</th>
+                          <th>MEMO</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      </tbody>
+              </table>
+          </div>
+          <p id="no-history-msg" style="margin-top:15px; display:none; color:#9E9E9E;">История пуста.</p>
+      </div>
+
+    </div>
+
+    <div id="tab-5" class="tab">
+      <div class="section-box">
+        <h3>🛠️ Информация</h3>
+        <p>Добро пожаловать в наше премиальное приложение!</p>
+        <p style="margin-top:20px; font-size:12px; color:#888;"> Версия: 1.0.25 (2025) </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-buttons">
+    <button class="tab-btn active" data-tab="tab-1"><span class="emoji">💰</span><span class="label">Заработок</span></button>
+    <button class="tab-btn" data-tab="tab-2"><span class="emoji">🎮</span><span class="label">Игры</span></button>
+    <button class="tab-btn" data-tab="tab-3"><span class="emoji">📝</span><span class="label">Задания</span></button>
+
+    <button class="tab-btn" data-tab="tab-4"><span class="emoji">💼</span><span class="label">Кошелек</span></button>
+    <button class="tab-btn" data-tab="tab-5"><span class="emoji">🛠️</span><span class="label">Инфо</span></button>
+  </div>
+</div>
+
+<div id="buy-tickets-modal-overlay" class="modal-overlay">
+  <div class="buy-tickets-modal-content">
+    <button id="close-buy-tickets-modal" class="modal-close-btn">&times;</button>
+    <h3 style="margin-bottom: 20px;">💰 Премиальная Покупка Ticket</h3>
+    
+    <p style="text-align: center; font-weight: 600; color: #f5f5f5; font-size:15px;">
+      Эксклюзивный курс: 
+      <span style="color:var(--gold1);">1 Ticket</span> = 
+      <span style="color:#26a17b; font-weight:700;">0.1 USDT</span>
+    </p>
+
+    <div style="margin: 20px 0;">
+      <label for="tickets-amount" style="display: block; margin-bottom: 8px; font-size: 14px; color: var(--gold2); text-align:center;">
+        Введите количество Ticket, которое Вы хотите приобрести:
+      </label>
+      <input type="number" id="tickets-amount" class="buy-input" placeholder="Введите сумму" min="1" value="100">
+    </div>
+
+    <p style="text-align: center; font-size: 15px; margin-bottom: 15px; font-weight: 500;">
+      Сумма к списанию (USDT): 
+      <span id="usdt-cost" style="font-weight: 700; color:#26a17b;">1.00</span>
+    </p>
+
+    <button id="buy-tickets-btn" class="buy-btn">
+      КУПИТЬ <span id="buy-tickets-display">100</span> TICKET
+    </button>
+    <div id="buy-message" class="withdraw-message" style="min-height:20px;"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
+<script>
+/* =========================== State management =========================== */
+let coinBalance = parseInt(localStorage.getItem('coinBalance')) || 0;
+let tonBalance = parseFloat(localStorage.getItem('tonBalance')) || 0.00;
+let usdtBalance = parseFloat(localStorage.getItem('usdtBalance')) || 0.00;
+let adsCount = parseInt(localStorage.getItem('adsCount')) || 0;
+const maxAds = 20;
+let currentFilter = localStorage.getItem('historyFilter') || 'all'; // 'all', 'reward', 'withdraw'
+let transactionHistory = JSON.parse(localStorage.getItem('transactionHistory')) || [];
+
+// New currency state for Ticket (Fixed rate to 0.1 USDT)
+let ticketBalance = parseInt(localStorage.getItem('ticketBalance')) || 0;
+const TICKET_RATE_USDT = 0.1; // 1 Ticket = 0.1 USDT (Исправлено)
+
+// --- ВАШИ ДЕЙСТВИТЕЛЬНЫЕ ПРОМОКОДЫ ---
+// Вы можете редактировать этот список, чтобы добавлять свои коды.
+const validPromoCodes = [
+    'PREMIUM25',
+    'WELCOME24',
+    'MEGAHYPE',
+    'TICKETBOOST' 
+]; 
+// Все коды автоматически обрабатываются как ВЕРХНИЙ РЕГИСТР
+// ------------------------------------
+
+
+/* =========================== Audio (WebAudio synth, offline, light) =========================== */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio(){
+    if(audioCtx) return;
+    audioCtx = new AudioCtx();
+    // create master gain
+    window.masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.9; // global volume control
+    masterGain.connect(audioCtx.destination);
+    // ambient: gentle stereo pad using 2 oscillators and slow LFO -> gain
+    const ambGain = audioCtx.createGain();
+    ambGain.gain.value = 0.04; // very low volume
+    ambGain.connect(masterGain);
+
+    const osc1 = audioCtx.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.value = 110; // low note
+    const osc1Gain = audioCtx.createGain();
+    osc1Gain.gain.value = 0.02;
+    osc1.connect(osc1Gain);
+    osc1Gain.connect(ambGain);
+
+    const osc2 = audioCtx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.value = 110.15; // slightly detuned
+    const osc2Gain = audioCtx.createGain();
+    osc2Gain.gain.value = 0.02;
+    osc2.connect(osc2Gain);
+    osc2Gain.connect(ambGain);
+
+    const lfo = audioCtx.createOscillator();
+    lfo.type = 'triangle';
+    lfo.frequency.value = 0.05; // very slow LFO for subtle volume variation
+
+    lfo.connect(osc1Gain.gain);
+    lfo.connect(osc2Gain.gain);
+
+    osc1.start();
+    osc2.start();
+    lfo.start();
+}
+
+function playClick(){
+    if(!soundEnabled) return;
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+    osc.frequency.linearRampToValueAtTime(340, audioCtx.currentTime + 0.05);
+
+    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+
+    osc.connect(gainNode);
+    gainNode.connect(masterGain);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.05);
+}
+
+function playBling(){
+    if(!soundEnabled) return;
+    initAudio();
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
+
+    gainNode.gain.setValueAtTime(0.5, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+
+    osc.connect(gainNode);
+    gainNode.connect(masterGain);
+    osc.start(now);
+    osc.stop(now + 0.15);
+}
+
+document.getElementById('sound-btn').addEventListener('click', ()=>{
+    soundEnabled = !soundEnabled;
+    document.getElementById('sound-btn').textContent = soundEnabled ? '🔊' : '🔇';
+});
+
+/* =========================== Animation for falling coin/ton/usdt/ticket (ОБНОВЛЕНО) =========================== */
+function createCurrencyAnimation(currency, amount){
+    const count = Math.min(Math.abs(Math.ceil(amount)), 30);
+    // Обновлено для добавления 'ticket'
+    const symbolMap = { 'coin':'💰', 'ton':'💎', 'usdt':'💵', 'ticket':'🎫' }; 
+    const cssClass = { 'coin':'', 'ton':'ton', 'usdt':'usdt', 'ticket':'ticket' }; // Класс 'ticket' для стилизации
+    const symbol = symbolMap[currency] || '💰';
+    const className = 'fall-coin ' + (cssClass[currency] || '');
+    const container = document.body;
+    
+    for(let i=0; i<count; i++){
+        const coin = document.createElement('div');
+        // Обновлено, чтобы использовать только фон для Ticket (см. CSS)
+        coin.className = className;
+        coin.textContent = (currency === 'ticket' && className.includes('ticket')) ? '' : symbol; 
+
+        const left = Math.random()*85 + 5;
+        coin.style.left = left + 'vw';
+        coin.style.top = '-40px';
+        coin.style.fontSize = (18 + Math.random()*18) + 'px';
+        container.appendChild(coin);
+        
+        const duration = 2000 + Math.random()*1200;
+        coin.style.transition = `transform ${duration}ms linear, opacity 400ms linear ${duration-400}ms`;
+
+        requestAnimationFrame(()=> {
+            // Анимация падения и вращения
+            coin.style.transform = `translateY(${window.innerHeight + 120}px) rotate(${(Math.random()*360)}deg)`;
+        });
+
+        // Обработчик клика для сбора (если надо)
+        coin.addEventListener('click', ()=>{
+            if(currency === 'coin'){
+                coinBalance++;
+                localStorage.setItem('coinBalance', coinBalance);
+            } else if(currency === 'ton'){
+                tonBalance = +(tonBalance + 0.01).toFixed(2);
+                localStorage.setItem('tonBalance', tonBalance);
+            } else if(currency === 'usdt'){
+                usdtBalance = +(usdtBalance + 0.01).toFixed(2);
+                localStorage.setItem('usdtBalance', usdtBalance);
+            } else if(currency === 'ticket'){
+                ticketBalance++;
+                localStorage.setItem('ticketBalance', ticketBalance);
+            }
+            updateAllBalances();
+            try{ playBling(); }catch(e){}
+            coin.remove();
+        });
+
+        // Удаление элемента после завершения анимации
+        setTimeout(()=>{
+            try{ coin.remove(); }catch(e){}
+        }, duration + 800);
+    }
+}
+
+
+/* =========================== Balances update (ОБНОВЛЕНО) =========================== */
+function updateAllBalances(){
+    const cb = coinBalance, tb = tonBalance, ub = usdtBalance;
+    // верхние балансы
+    const topCoin = document.getElementById('coin-balance');
+    const topTon = document.getElementById('ton-balance');
+    const topUsdt = document.getElementById('usdt-balance');
+    const topTicket = document.getElementById('ticket-balance'); // ДОБАВЛЕНО
+    
+    if(topCoin) topCoin.textContent = cb;
+    if(topTon) topTon.textContent = tb.toFixed(2);
+    if(topUsdt) topUsdt.textContent = ub.toFixed(2);
+    if(topTicket) topTicket.textContent = ticketBalance; // ОБНОВЛЕНИЕ TICKET
+
+    // кошелек
+    const wCoin = document.getElementById('coinBalance');
+    const wTon = document.getElementById('tonBalance');
+    const wUsdt = document.getElementById('usdtBalance');
+
+    if(wCoin) wCoin.textContent = cb;
+    if(wTon) wTon.textContent = tb.toFixed(2);
+    if(wUsdt) wUsdt.textContent = ub.toFixed(2);
+}
+
+/* =========================== Transaction History =========================== */
+function addTransaction(amount, currency, type, wallet, memo, source){
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('ru-RU') + ', ' + now.toLocaleTimeString('ru-RU');
+    transactionHistory.unshift({
+        date: dateStr,
+        amount: amount,
+        currency: currency,
+        type: type, // 'reward', 'withdraw', 'deposit'
+        wallet: wallet,
+        memo: memo,
+        source: source
+    });
+    // Ограничиваем историю до 50 записей
+    if(transactionHistory.length > 50) transactionHistory.pop();
+    localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory));
+    renderTransactionHistory();
+}
+
+function renderTransactionHistory(){
+    const tableBody = document.querySelector('#transaction-history-table tbody');
+    const noHistoryMsg = document.getElementById('no-history-msg');
+    if (!tableBody) return;
+
+    // Очистка
+    tableBody.innerHTML = '';
+
+    const filteredHistory = transactionHistory.filter(t => currentFilter === 'all' || t.type === currentFilter);
+
+    if (filteredHistory.length === 0) {
+        noHistoryMsg.style.display = 'block';
+        return;
+    }
+
+    noHistoryMsg.style.display = 'none';
+
+    filteredHistory.forEach(t => {
+        const row = tableBody.insertRow();
+        row.className = `history-type-${t.type}`;
+        
+        const typeDisplay = { 'reward': 'Награда', 'deposit': 'Депозит', 'withdraw': 'Вывод' };
+        
+        // Определяем класс для цвета суммы
+        let amountClass = 'history-amount-neutral';
+        let amountPrefix = '';
+        if (t.type === 'reward' || t.type === 'deposit') {
+            amountClass = 'history-amount-plus';
+            amountPrefix = '+';
+        } else if (t.type === 'withdraw') {
+            amountClass = 'history-amount-minus';
+            amountPrefix = '-';
+        }
+
+        const walletAddress = t.wallet === '-' ? '-' : t.wallet.substring(0, 4) + '...' + t.wallet.substring(t.wallet.length - 4);
+        
+        const cells = [
+            t.date.split(',')[0], // Дата (только дата)
+            amountPrefix + t.amount, // Сумма
+            t.currency, // Валюта
+            typeDisplay[t.type] || t.type, // Тип
+            walletAddress, // Кошелек (обрезанный)
+            t.source // MEMO (фактически, описание)
+        ];
+
+        cells.forEach((text, index) => {
+            const cell = row.insertCell();
+            cell.textContent = text;
+            if(index === 1) cell.className = amountClass; // Применяем цвет к сумме
+            // Добавляем title для полного адреса/описания
+            if(index === 4) cell.title = t.wallet === '-' ? t.source : t.wallet;
+            if(index === 5) cell.title = t.memo === '-' ? t.source : `Описание: ${t.source}. MEMO: ${t.memo}`;
+        });
+    });
+}
+// Обработчики фильтров истории
+document.querySelectorAll('#history-filters .filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        currentFilter = btn.dataset.filter;
+        localStorage.setItem('historyFilter', currentFilter);
+        document.querySelectorAll('#history-filters .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderTransactionHistory();
+        try{ playClick(); }catch(e){}
+    });
+});
+
+/* =========================== TON Connect (SIMULATION) =========================== */
+function isValidTon(address){
+    // Простое демо-валидация, что адрес выглядит как адрес TON (начинается с UQ/EQ)
+    return address && (address.startsWith('UQ') || address.startsWith('EQ'));
+}
+// TonConnect: connect wallet (SIMULATION)
+document.getElementById('connect-ton-wallet').addEventListener('click', async () => {
+    try {
+        // Имитация подключения: генерируем случайный адрес
+        const tonAddress = 'UQ' + Array(48).fill(0).map(() => (Math.random() * 16 | 0).toString(16)).join('');
+        document.getElementById('ton-wallet-address').textContent = `Подключен: ${tonAddress.substring(0, 4)}...${tonAddress.substring(tonAddress.length - 4)}`;
+        alert('TON кошелек успешно подключен (имитация)!');
+        try{ playBling(); }catch(e){}
+    } catch (e) {
+        console.error(e);
+        alert('Ошибка при подключении TON кошелька.');
+    }
+});
+
+
+/* =========================== Utility: Date functions =========================== */
+function getUTCDateKey(){
+    const now = new Date();
+    return now.getUTCFullYear() + '-' + String(now.getUTCMonth()+1).padStart(2,'0') + '-' + String(now.getUTCDate()).padStart(2,'0');
+}
+
+
+/* =========================== Withdraw: check and execute (SIMULATION) =========================== */
+document.getElementById('withdraw-max').addEventListener('click', ()=>{
+    document.getElementById('withdraw-amount').value = coinBalance;
+});
+document.getElementById('withdraw-btn').addEventListener('click', ()=>{
+    const withdrawTon = document.getElementById('withdraw-ton');
+    const withdrawAmount = document.getElementById('withdraw-amount');
+    const withdrawMemo = document.getElementById('withdraw-memo');
+    const withdrawMessage = document.getElementById('withdraw-message');
+
+    const address = withdrawTon.value.trim();
+    const memo = withdrawMemo.value.trim() || '-';
+    const amount = parseInt(withdrawAmount.value);
+
+    withdrawMessage.style.display = 'block';
+    withdrawMessage.textContent = '';
+    withdrawTon.classList.remove('error-field');
+    withdrawAmount.classList.remove('error-field');
+    
+    try { playClick(); } catch(e) {}
+
+    if (!address) {
+        withdrawTon.classList.add('error-field');
+        withdrawMessage.textContent = 'Введите TON адрес!';
+        withdrawMessage.style.color = '#E53935';
+        return;
+    } else {
+        withdrawTon.classList.remove('error-field');
+    }
+
+    if (!isValidTon(address)) {
+        withdrawTon.classList.add('error-field');
+        withdrawMessage.textContent = 'Неверный TON адрес!';
+        withdrawMessage.style.color = '#E53935';
+        return;
+    } else {
+        withdrawTon.classList.remove('error-field');
+    }
+
+    if (!amount || amount < 1) {
+        withdrawAmount.classList.add('error-field');
+        withdrawMessage.textContent = 'Введите корректную сумму!';
+        withdrawMessage.style.color = '#E53935';
+        return;
+    } else {
+        withdrawAmount.classList.remove('error-field');
+    }
+
+    if (amount > coinBalance) {
+        withdrawMessage.textContent = 'Недостаточно средств!';
+        withdrawMessage.style.color = '#E53935';
+        return;
+    }
+
+    // Имитируем отправку (можно заменить на API вызов)
+    coinBalance -= amount;
+    localStorage.setItem('coinBalance', coinBalance);
+    updateAllBalances();
+
+    // ДОБАВЛЕНИЕ ОПЕРАЦИИ В ИСТОРИЮ
+    addTransaction(amount, 'Coin', 'withdraw', address, memo, 'Вывод средств');
+
+    withdrawMessage.textContent = `✅ Вывод ${amount} Coins на адрес ${address} выполнен!`;
+    withdrawMessage.style.color = '#4CAF50';
+
+    // Очистка полей
+    withdrawAmount.value = '';
+    withdrawTon.value = '';
+    withdrawMemo.value = '';
+
+    // Анимация монет
+    createCurrencyAnimation('coin', amount);
+    try { playBling(); } catch(e) {}
+});
+
+/* =========================== Promo: apply promo -> 1 coin + 0.01 TON + 0.01 USDT (ИСПРАВЛЕНО) =========================== */
+document.getElementById('promo-apply').addEventListener('click', applyPromo);
+function applyPromo(){
+    // Приводим введенный код к верхнему регистру для нечувствительности к регистру
+    const code = document.getElementById('promo').value.trim().toUpperCase();
+    const msgEl = document.getElementById('promo-message');
+    
+    // Сброс сообщений
+    msgEl.style.display='none';
+    
+    if(!code){
+        msgEl.style.display='block';
+        msgEl.textContent='⚠️ Введите код';
+        msgEl.style.color='#E53935';
+        setTimeout(()=>msgEl.style.display='none',2000);
+        return;
+    }
+
+    // ФИКС: ПРОВЕРКА НА ДЕЙСТВИТЕЛЬНОСТЬ КОДА
+    if(!validPromoCodes.includes(code)){
+        msgEl.style.display='block';
+        msgEl.textContent='❌ Неверный или недействительный промокод.';
+        msgEl.style.color='#E53935';
+        setTimeout(()=>msgEl.style.display='none',3000);
+        return;
+    }
+
+    // ФИКС: ПРОВЕРКА НА ПОВТОРНОЕ ИСПОЛЬЗОВАНИЕ СЕГОДНЯ
+    const key = 'promoApplied_' + code + '_' + getUTCDateKey();
+    if(localStorage.getItem(key) === 'true'){
+        msgEl.style.display='block';
+        msgEl.textContent=`❌ Промокод "${code}" уже был активирован сегодня!`;
+        msgEl.style.color='#E53935';
+        setTimeout(()=>msgEl.style.display='none',3000);
+        return;
+    }
+
+    // Имитация активации (награды)
+    const coinReward = 1;
+    const tonReward = 0.01;
+    const usdtReward = 0.01;
+    
+    coinBalance += coinReward;
+    tonBalance = +(tonBalance + tonReward).toFixed(2);
+    usdtBalance = +(usdtBalance + usdtReward).toFixed(2);
+
+    localStorage.setItem('coinBalance', coinBalance);
+    localStorage.setItem('tonBalance', tonBalance);
+    localStorage.setItem('usdtBalance', usdtBalance);
+    // Отмечаем код как использованный сегодня
+    localStorage.setItem(key, 'true'); 
+
+    updateAllBalances();
+    
+    // ДОБАВЛЕНИЕ ОПЕРАЦИИ В ИСТОРИЮ
+    addTransaction(coinReward, 'Coin', 'reward', '-', '-', 'Промокод: ' + code);
+    addTransaction(tonReward, 'TON', 'reward', '-', '-', 'Промокод: ' + code);
+    addTransaction(usdtReward, 'USDT', 'reward', '-', '-', 'Промокод: ' + code);
+
+    msgEl.style.display='block';
+    msgEl.textContent=`🎉 Успех! Промокод "${code}" активирован. +${coinReward} Coin, +${tonReward} TON, +${usdtReward} USDT!`;
+    msgEl.style.color='#4CAF50';
+    setTimeout(()=>msgEl.style.display='none',3000);
+
+    createCurrencyAnimation('coin', coinReward);
+    createCurrencyAnimation('ton', tonReward);
+    createCurrencyAnimation('usdt', usdtReward);
+    try{ playBling(); }catch(e){}
+
+}
+
+
+/* =========================== Ads: watch ad -> 1 coin =========================== */
+document.getElementById('watch-ad-btn').addEventListener('click', ()=>{
+    if(adsCount >= maxAds){
+        alert('Вы просмотрели максимальное количество реклам на сегодня!');
+        return;
+    }
+
+    document.getElementById('watch-ad-btn').disabled = true;
+    document.getElementById('watch-ad-btn').textContent = 'Загрузка...';
+
+    // Имитация просмотра рекламы
+    setTimeout(()=>{
+        adsCount++;
+        coinBalance++;
+        localStorage.setItem('adsCount', adsCount);
+        localStorage.setItem('coinBalance', coinBalance);
+
+        document.getElementById('ads-count').textContent = adsCount;
+        document.getElementById('ads-progress-bar-inner').style.width = (adsCount/maxAds*100) + '%';
+
+        updateAllBalances();
+
+        // ДОБАВЛЕНИЕ ОПЕРАЦИИ В ИСТОРИЮ
+        addTransaction(1, 'Coin', 'reward', '-', '-', 'Просмотр рекламы');
+
+        document.getElementById('watch-ad-btn').textContent = '▶ Смотреть';
+        document.getElementById('watch-ad-btn').disabled = false;
+
+        // Анимация монеты
+        createCurrencyAnimation('coin', 1);
+        try{ playBling(); }catch(e){}
+    }, 2000);
+});
+
+/* =========================== Riddle: one answer per day (UTC) =========================== */
+const riddleBtn = document.getElementById('riddle-btn');
+riddleBtn.addEventListener('click', checkRiddle);
+
+function checkRiddle(){
+    const key = 'riddleAnswered_' + getUTCDateKey();
+    if(localStorage.getItem(key) === 'true'){
+        alert('Вы уже отвечали на загадку сегодня!');
+        return;
+    }
+
+    const ans = (document.getElementById('riddle-answer').value || '').trim().toLowerCase();
+    const msgEl = document.getElementById('riddle-msg');
+
+    if(ans === '' ){
+        msgEl.style.display='block';
+        msgEl.textContent='⚠️ Введите ответ';
+        msgEl.style.color='#E53935';
+        setTimeout(()=>msgEl.style.display='none',2000);
+        return;
+    }
+
+    if(ans.includes('пиани') || ans.includes('piano')){
+        coinBalance += 5;
+        localStorage.setItem('coinBalance', coinBalance);
+        updateAllBalances();
+        localStorage.setItem(key, 'true');
+        
+        msgEl.style.display='block';
+        msgEl.style.color='#4CAF50';
+        msgEl.textContent='✅ Правильно! +5 Coin';
+        
+        // ДОБАВЛЕНИЕ ОПЕРАЦИИ В ИСТОРИЮ
+        addTransaction(5, 'Coin', 'reward', '-', '-', 'Загадка дня');
+
+        createCurrencyAnimation('coin', 5);
+        try{ playBling(); }catch(e){}
+    } else {
+        msgEl.style.display='block';
+        msgEl.style.color='#E53935';
+        msgEl.textContent='❌ Неправильно, попробуйте снова!';
+    }
+    setTimeout(()=>msgEl.style.display='none',3000);
+}
+
+/* =========================== Tabs switching with click sound & ripple =========================== */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', function(e){
+        try{ playClick(); }catch(e){}
+
+        // ripple effect
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        const rect = btn.getBoundingClientRect();
+        ripple.style.left = (e.clientX - rect.left) + 'px';
+        ripple.style.top = (e.clientY - rect.top) + 'px';
+        this.appendChild(ripple);
+        setTimeout(()=>ripple.remove(), 400);
+
+        // switch tabs
+        const targetTab = this.dataset.tab;
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.getElementById(targetTab).classList.add('active');
+        
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        // Render history when tab-4 is opened
+        if (targetTab === 'tab-4') {
+            renderTransactionHistory();
+        }
+    });
+});
+
+
+
+
+
+
+
+
+/* ===========================
+   КОНСТАНТЫ И ПЕРЕМЕННЫЕ КОМБО
+   =========================== */
+
+// Имена файлов изображений, используемых в качестве символов комбо
+const comboSymbols = [
+    'combo1.png', 
+    'combo2.png', 
+    'combo3.png', 
+    'combo4.png', 
+    'combo5.png', 
+    'combo6.png', 
+    'combo7.png', 
+    'combo8.png'
+];
+// Награда за успешное комбо: 5 Coin (для красоты) и 0.05 USDT (по вашему запросу)
+const comboReward = { coin: 5, ton: 0, usdt: 0.05 }; 
+const comboLength = 3; // Количество карт, которые нужно угадать
+
+let comboState = JSON.parse(localStorage.getItem('comboState')) || {
+    selected: [],       // Выбранные игроком карты (имена файлов)
+    correctCombo: [],   // Правильное комбо на сегодня (имена файлов)
+    lastReset: 0,       // Временная метка последнего сброса (для ежедневной проверки)
+    canClaim: true,     // Можно ли проверять комбо (блокировка во время анимации)
+    claimedToday: false // Собрано ли комбо сегодня
+};
+
+/* ===========================
+   ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ КОМБО
+   =========================== */
+
+// Функция для перемешивания массива
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Сброс состояния комбо и генерация нового
+function resetCombo() {
+    const now = new Date();
+    // Определяем начало текущего дня по UTC для корректной ежедневной логики
+    const startOfUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).getTime();
+    
+    comboState.lastReset = startOfUTC;
+    comboState.selected = [];
+    comboState.canClaim = true;
+    comboState.claimedToday = false; 
+    
+    // Генерация нового корректного комбо из случайных 3 символов
+    const shuffledSymbols = shuffleArray([...comboSymbols]);
+    comboState.correctCombo = shuffledSymbols.slice(0, comboLength);
+    
+    localStorage.setItem('comboState', JSON.stringify(comboState));
+}
+
+/* ===========================
+   ОСНОВНАЯ ЛОГИКА КОМБО
+   =========================== */
+
+// Обновление таймера и сообщения
+function updateComboTimer() {
+    const now = Date.now();
+    
+    // Определяем время следующего сброса (начало следующего дня по UTC)
+    const tomorrow = new Date();
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    const nextResetTime = new Date(Date.UTC(tomorrow.getUTCFullYear(), tomorrow.getUTCMonth(), tomorrow.getUTCDate())).getTime();
+    
+    const timeUntilReset = nextResetTime - now;
+    const messageEl = document.getElementById('combo-message');
+    const timerEl = document.getElementById('combo-next-reset');
+    const cardsContainer = document.getElementById('combo-cards');
+
+    if (!messageEl || !timerEl) return;
+
+    if (timeUntilReset <= 0) {
+      // Время вышло, сбрасываем и регенерируем
+      resetCombo(); 
+      generateComboCards(); 
+      updateComboTimer();
+      return;
+    }
+
+    // Форматирование времени до сброса
+    const hours = Math.floor(timeUntilReset / (1000 * 60 * 60));
+    const minutes = Math.floor((timeUntilReset % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeUntilReset % (1000 * 60)) / 1000);
+
+    const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    timerEl.textContent = `Сброс через: ${formattedTime}`;
+
+    if (comboState.claimedToday) {
+      messageEl.textContent = `✅ Комбо собрано! Вы получили +${comboReward.usdt.toFixed(2)} USDT.`;
+      messageEl.style.color = '#4CAF50';
+      if (cardsContainer) cardsContainer.querySelectorAll('.combo-card').forEach(card => card.style.pointerEvents = 'none');
+    } else {
+        messageEl.textContent = `Выберите ${comboLength} символа для комбо! (Выбрано: ${comboState.selected.length})`;
+        messageEl.style.color = '#d9d9d9';
+    }
+    
+    // Обновлять каждую секунду
+    setTimeout(updateComboTimer, 1000);
+}
+
+// Генерация карточек в HTML
+function generateComboCards() {
+    const cardsContainer = document.getElementById('combo-cards');
+    if (!cardsContainer) return;
+
+    cardsContainer.innerHTML = ''; 
+    
+    // Используем все 8 символов для отображения на сетке
+    const allSymbols = shuffleArray([...comboSymbols]); 
+
+    allSymbols.forEach((symbol) => {
+      const card = document.createElement('div');
+      card.className = 'combo-card';
+      card.setAttribute('data-symbol', symbol);
+      
+      // Использование <img> для символов
+      card.innerHTML = `
+          <div class="card-overlay">${comboState.claimedToday && comboState.correctCombo.includes(symbol) ? '' : '?'}</div>
+          <img src="${symbol}" class="symbol-display" alt="Комбо карта">
+      `;
+      
+      const overlay = card.querySelector('.card-overlay');
+
+      // Восстановление состояния из localStorage
+      if (comboState.claimedToday) {
+         card.style.opacity = 0.5;
+         card.classList.remove('selected');
+         if (comboState.correctCombo.includes(symbol)) {
+             card.classList.add('correct');
+             if(overlay) overlay.style.opacity = '0';
+         }
+      } else {
+         if (comboState.selected.includes(symbol)) {
+            card.classList.add('selected');
+            if(overlay) overlay.style.opacity = '0';
+         }
+      }
+
+      card.addEventListener('click', () => handleComboClick(card, symbol));
+      cardsContainer.appendChild(card);
+    });
+}
+
+function handleComboClick(card, symbol) {
+    // try { playClick(); } catch(e){} // Предполагается, что playClick определена
+
+    if (comboState.claimedToday || !comboState.canClaim) {
+        return; 
+    }
+
+    const overlay = card.querySelector('.card-overlay');
+    let shouldCheck = false;
+
+    if (card.classList.contains('selected')) {
+      // Отмена выбора
+      card.classList.remove('selected');
+      comboState.selected = comboState.selected.filter(s => s !== symbol);
+      if(overlay) overlay.style.opacity = '1';
+    } else if (comboState.selected.length < comboLength) {
+      // Выбор
+      card.classList.add('selected');
+      comboState.selected.push(symbol);
+      if(overlay) overlay.style.opacity = '0';
+      if (comboState.selected.length === comboLength) {
+        shouldCheck = true;
+      }
+    }
+    
+    localStorage.setItem('comboState', JSON.stringify(comboState));
+    
+    if (shouldCheck) {
+      checkCombo();
+    }
+    updateComboTimer(); // Обновление сообщения о количестве выбранных карт
+}
+
+function checkCombo() {
+    if (comboState.claimedToday || !comboState.canClaim) return;
+
+    comboState.canClaim = false; // Блокируем клики на время проверки
+    
+    const selectedSymbols = comboState.selected;
+    const correctCombo = comboState.correctCombo;
+    const cards = document.querySelectorAll('#combo-cards .combo-card');
+    const messageEl = document.getElementById('combo-message');
+    
+    cards.forEach(card => card.style.pointerEvents = 'none'); // Блокируем карты
+
+    // Проверка, что выбранные символы являются частью правильного комбо
+    let isCorrect = selectedSymbols.length === comboLength && 
+                    selectedSymbols.every(symbol => correctCombo.includes(symbol));
+
+    if (isCorrect) {
+      // --- КОМБО СОБРАНО УСПЕШНО ---
+      comboState.claimedToday = true;
+      
+      // Награда
+      coinBalance += comboReward.coin;
+      usdtBalance = +(usdtBalance + comboReward.usdt).toFixed(2);
+      
+      // Сохранение и обновление UI
+      localStorage.setItem('coinBalance', coinBalance);
+      localStorage.setItem('usdtBalance', usdtBalance);
+      updateAllBalances();
+      
+      // История транзакций
+      addTransaction(comboReward.coin, 'Coin', 'reward', 'Combo', 'Daily Combo', 'Ежедневное Комбо');
+      addTransaction(comboReward.usdt, 'USDT', 'reward', 'Combo', 'Daily Combo');
+      
+      // Анимация и сообщение
+      createCurrencyAnimation('coin', comboReward.coin);
+      createCurrencyAnimation('usdt', comboReward.usdt);
+      // try{ playBling(); }catch(e){} // Предполагается, что playBling определена
+      messageEl.textContent = `🎉 Комбо угадано! +${comboReward.usdt.toFixed(2)} USDT!`;
+      messageEl.style.color = '#4CAF50';
+
+      // Подсветка правильных карточек
+      cards.forEach(card => {
+        card.classList.remove('selected', 'incorrect');
+        if (correctCombo.includes(card.getAttribute('data-symbol'))) {
+          card.classList.add('correct');
+        } else {
+           card.style.opacity = 0.5;
+        }
+      });
+
+    } else {
+      // --- КОМБО НЕ СОБРАНО ---
+      
+      // Подсветка неправильных/правильных карт для обратной связи
+      cards.forEach(card => {
+        const symbol = card.getAttribute('data-symbol');
+        if (selectedSymbols.includes(symbol)) {
+             // Показываем, что было выбрано, и правильно ли это
+             if (correctCombo.includes(symbol)) {
+                 card.classList.add('correct'); 
+             } else {
+                 card.classList.add('incorrect'); 
+             }
+        }
+        card.classList.remove('selected'); 
+      });
+      
+      messageEl.textContent = '❌ Неверно! Попробуйте еще раз завтра.';
+      messageEl.style.color = '#E53935';
+
+      // Через 3 секунды сбрасываем состояние карт и разблокируем
+      setTimeout(() => {
+         comboState.selected = []; 
+         comboState.canClaim = true; 
+         
+         cards.forEach(card => {
+            card.classList.remove('correct', 'incorrect', 'selected');
+            card.style.opacity = 1;
+            card.style.pointerEvents = 'auto';
+            
+            const overlay = card.querySelector('.card-overlay');
+            if(overlay) overlay.style.opacity = '1';
+         });
+         
+         localStorage.setItem('comboState', JSON.stringify(comboState));
+         updateComboTimer(); // Обновление сообщения
+      }, 3000); 
+    }
+
+    localStorage.setItem('comboState', JSON.stringify(comboState));
+    updateComboTimer(); 
+}
+  
+// Инициализация состояния комбо при загрузке
+function initComboState() {
+    const storedState = localStorage.getItem('comboState');
+    if (storedState) {
+        comboState = JSON.parse(storedState);
+        
+        const now = new Date();
+        const startOfUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).getTime();
+        
+        // Если последний сброс был раньше начала сегодняшнего дня по UTC, то сбрасываем
+        if (comboState.lastReset < startOfUTC) {
+            resetCombo(); 
+        } 
+    } else {
+        resetCombo(); // Первый запуск
+    }
+    
+    // Генерируем карточки и запускаем таймер
+    generateComboCards();
+    updateComboTimer();
+}
+
+/* ===========================
+   ДОБАВЛЕНИЕ В DOMContentLoaded
+   =========================== */
+
+// Вставьте вызов initComboState() в ваш главный обработчик DOMContentLoaded
+document.addEventListener('DOMContentLoaded', ()=> {
+    // ... ваш существующий код инициализации ...
+    initComboState(); 
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================== Daily login (streak) =========================== */
+let dailyStreak = parseInt(localStorage.getItem('dailyStreak')) || 0;
+let lastLoginDate = localStorage.getItem('lastLoginDate') || '';
+
+function updateDailyCells(){
+    document.querySelectorAll('.day-cell').forEach(cell=>{
+        const day = parseInt(cell.dataset.day);
+        if(day <= dailyStreak) cell.classList.add('active');
+        else cell.classList.remove('active');
+    });
+}
+updateDailyCells();
+
+document.getElementById('daily-login-btn').addEventListener('click', ()=>{
+    const today = new Date();
+    const todayKey = today.getUTCFullYear()+'-'+String(today.getUTCMonth()+1).padStart(2,'0')+'-'+String(today.getUTCDate()).padStart(2,'0');
+
+    if(lastLoginDate === todayKey){
+        alert('Вы уже получили бонус сегодня!');
+        return;
+    }
+
+    const yesterday = new Date();
+    yesterday.setUTCDate(yesterday.getUTCDate()-1);
+    const yesterdayKey = yesterday.getUTCFullYear()+'-'+String(yesterday.getUTCMonth()+1).padStart(2,'0')+'-'+String(yesterday.getUTCDate()).padStart(2,'0');
+
+    if(lastLoginDate === yesterdayKey){
+        dailyStreak++;
+    } else {
+        dailyStreak = 1;
+    }
+
+    if(dailyStreak > 7) dailyStreak = 1;
+
+    lastLoginDate = todayKey;
+    localStorage.setItem('dailyStreak', dailyStreak);
+    localStorage.setItem('lastLoginDate', lastLoginDate);
+
+    let reward = 10 + (dailyStreak - 1) * 5; // 10, 15, 20...
+    if(dailyStreak === 7) reward += 50; // Бонус за 7 дней
+
+    coinBalance += reward;
+    localStorage.setItem('coinBalance', coinBalance);
+
+    updateAllBalances();
+    updateDailyCells();
+
+    // ДОБАВЛЕНИЕ ОПЕРАЦИИ В ИСТОРИЮ
+    addTransaction(reward, 'Coin', 'reward', '-', '-', 'Ежедневный вход (день ' + dailyStreak + ')');
+    
+    alert(`Бонус получен! +${reward} Coin за ${dailyStreak} день(дня) подряд!`);
+    createCurrencyAnimation('coin', reward);
+    try{ playBling(); }catch(e){}
+});
+
+
+/* =========================== Ticket Purchase Logic =========================== */
+
+function initTicketPurchase() {
+    const buyModalOverlay = document.getElementById('buy-tickets-modal-overlay');
+    const ticketsAmountInput = document.getElementById('tickets-amount');
+    const usdtCostDisplay = document.getElementById('usdt-cost');
+    const buyTicketsBtn = document.getElementById('buy-tickets-btn');
+    const buyTicketsDisplay = document.getElementById('buy-tickets-display');
+    const buyMessageEl = document.getElementById('buy-message');
+
+    if (!buyTicketsBtn) {
+        console.error("Кнопка покупки Ticket не найдена! Проверьте, правильно ли вставлен HTML-код модального окна.");
+        return; 
+    }
+
+    function calculateCost(amount) {
+        return (amount * TICKET_RATE_USDT).toFixed(2); 
+    }
+
+    function updateModalDisplays() {
+        const amount = parseInt(ticketsAmountInput.value) || 0;
+        const cost = parseFloat(calculateCost(amount));
+        
+        usdtCostDisplay.textContent = cost.toFixed(2);
+        buyTicketsDisplay.textContent = amount;
+
+        if (cost > usdtBalance) {
+            buyTicketsBtn.disabled = true;
+            buyTicketsBtn.style.opacity = '0.5';
+        } else {
+            buyTicketsBtn.disabled = false; 
+            buyTicketsBtn.style.opacity = '1';
+        }
+    }
+
+    // 1. Open Modal
+    document.getElementById('open-buy-tickets-modal').addEventListener('click', () => {
+        buyModalOverlay.classList.add('open');
+        ticketsAmountInput.value = '100'; 
+        buyMessageEl.textContent = '';
+        buyTicketsBtn.disabled = false; // Снимаем блокировку при открытии
+        updateModalDisplays();
+        try { playClick(); } catch(e) {}
+    });
+
+    // 2. Close Modal
+    document.getElementById('close-buy-tickets-modal').addEventListener('click', () => {
+        buyModalOverlay.classList.remove('open');
+        try { playClick(); } catch(e) {}
+    });
+
+    // 3. Update cost on input change
+    ticketsAmountInput.addEventListener('input', () => {
+        let value = parseInt(ticketsAmountInput.value);
+        if (isNaN(value) || value < 1) {
+            value = 1; 
+        }
+        ticketsAmountInput.value = value;
+        updateModalDisplays();
+    });
+
+    // 4. Purchase Logic
+    buyTicketsBtn.addEventListener('click', () => {
+        const amount = parseInt(ticketsAmountInput.value);
+        const cost = parseFloat(calculateCost(amount));
+        buyMessageEl.textContent = ''; 
+
+        if (amount <= 0 || isNaN(amount)) {
+            buyMessageEl.textContent = 'Введите корректное количество Ticket!';
+            buyMessageEl.style.color = '#E53935';
+            return;
+        }
+
+        if (cost > usdtBalance) {
+            buyMessageEl.textContent = '❌ Недостаточно USDT для покупки!';
+            buyMessageEl.style.color = '#E53935';
+            try { playClick(); } catch(e) {}
+            return;
+        }
+
+        // Выполнение покупки
+        usdtBalance = +(usdtBalance - cost).toFixed(2);
+        ticketBalance += amount;
+        
+        localStorage.setItem('usdtBalance', usdtBalance);
+        localStorage.setItem('ticketBalance', ticketBalance);
+        
+        updateAllBalances();
+        
+        // Добавление транзакции: вывод USDT и получение Ticket
+        addTransaction(cost, 'USDT', 'withdraw', 'Buy Ticket', amount + ' Ticket', 'Покупка Ticket');
+        addTransaction(amount, 'Ticket', 'reward', '-', cost + ' USDT', 'Покупка Ticket'); 
+        
+        buyMessageEl.textContent = `🎉 Транзакция успешна! Вы получили ${amount} Ticket!`;
+        buyMessageEl.style.color = '#4CAF50';
+        
+        createCurrencyAnimation('ticket', amount); 
+
+        // Блокируем кнопку (пока не откроется снова) и закрываем модальное окно через 2 секунды
+        buyTicketsBtn.disabled = true;
+        buyTicketsBtn.style.opacity = '0.5';
+        setTimeout(() => {
+            buyModalOverlay.classList.remove('open');
+        }, 2000);
+
+        try { playBling(); } catch(e) {}
+    });
+}
+
+
+
+
+
+
+
+
+/* ============================================================
+   🎮 ПРЕМИУМ МИНИ-ИГРЫ — С ИНТЕРАКТИВНЫМ ВЫБОРОМ
+============================================================ */
+const gameModal = document.getElementById("game-modal");
+const gameVisual = document.getElementById("game-visual");
+const gameStatus = document.getElementById("game-status");
+const rewardModal = document.getElementById("reward-modal");
+const rewardTitle = document.getElementById("reward-title");
+const rewardAmountEl = document.getElementById("reward-amount");
+const closeRewardBtn = document.getElementById("close-reward-btn");
+
+/* === ПУЛ НАГРАД === */
+const rewardsPool = [
+  { chance: 10, reward: null },
+  { chance: 40, reward: { type: "coin", amount: 1 } },
+  { chance: 10, reward: { type: "ticket", amount: 2 } },
+  { chance: 5,  reward: { type: "coin", amount: 30 } },
+  { chance: 5,  reward: { type: "usdt", amount: 0.15 } },
+  { chance: 5,  reward: { type: "ton", amount: 0.1 } },
+  { chance: 10, reward: { type: "coin", amount: getRandomInt(1,5) } },
+  { chance: 5,  reward: { type: "ton", amount: +(Math.random() * 0.05).toFixed(2) } },
+  { chance: 5,  reward: { type: "usdt", amount: +(Math.random() * 0.05).toFixed(2) } }
+];
+
+/* === КНОПКИ ИГР === */
+document.querySelectorAll(".game-card").forEach(btn=>{
+  btn.addEventListener("click", async ()=>{
+    const gameType = btn.dataset.game;
+
+    if (ticketBalance < 1) {
+      alert("Недостаточно Ticket для игры!");
+      return;
+    }
+
+    ticketBalance -= 1;
+    localStorage.setItem("ticketBalance", ticketBalance);
+    updateAllBalances();
+    startGameAnimation(gameType);
+  });
+});
+
+/* === ЗАПУСК ИГРЫ === */
+function startGameAnimation(type){
+  gameModal.classList.add("open");
+  gameVisual.innerHTML = "";
+  gameStatus.textContent = "Игра начинается...";
+
+  let animation;
+  switch(type){
+    case "cups": animation = animateCups; break;
+    case "dice": animation = animateDice; break;
+    case "coinflip": animation = animateCoin; break;
+    case "roulette": animation = animateRoulette; break;
+  }
+
+  animation((win)=>{
+    gameModal.classList.remove("open");
+    if (!win) {
+      showRewardModal("😢 Не повезло!", `<span style='color:#aaa;'>Попробуй еще раз</span>`);
+      addTransaction(0,"Ticket","reward","-","-",`Игра: ${getGameName(type)} (мимо)`);
+    } else {
+      const reward = getRandomReward();
+      applyReward(reward,type);
+    }
+  });
+}
+
+/* === ИГРА: СТАКАНЧИКИ === */
+function animateCups(callback){
+  gameVisual.innerHTML = `
+    <div class="cups-container">
+      <div class="cup" data-index="0"></div>
+      <div class="cup" data-index="1"></div>
+      <div class="cup" data-index="2"></div>
+    </div>`;
+  
+  gameStatus.textContent = "Перемешиваем стаканы...";
+
+  const cups = [...gameVisual.querySelectorAll(".cup")];
+  const hiddenIndex = Math.floor(Math.random() * 3);
+
+  // сохраняем индекс с выигрышем (логически — монета под стаканом)
+  cups.forEach((c,i)=>{
+    c.style.left = `${i*60}px`;
+    c.style.animation = "shuffle 1s infinite alternate";
+  });
+
+  setTimeout(()=>{
+    cups.forEach(c=>c.style.animation="none");
+    gameStatus.textContent = "Выбери стакан ☝️";
+    cups.forEach(c=>{
+      c.addEventListener('click', ()=>{
+        const chosen = +c.dataset.index;
+        const win = chosen === hiddenIndex;
+        c.classList.add("lift");
+        gameStatus.textContent = win ? "🎉 Ты угадал!" : "😢 Мимо!";
+        setTimeout(()=>callback(win),1200);
+      }, { once: true });
+    });
+  },2000);
+}
+
+/* === ИГРА: КУБИКИ (битва) === */
+function animateDice(callback){
+  gameVisual.innerHTML = `
+    <div class="dice-battle">
+      <div class="dice player-dice"></div>
+      <div class="vs-text">VS</div>
+      <div class="dice enemy-dice"></div>
+    </div>`;
+  const player = gameVisual.querySelector(".player-dice");
+  const enemy = gameVisual.querySelector(".enemy-dice");
+  let rolls = 0;
+
+  const roll = setInterval(()=>{
+    rolls++;
+    player.textContent = getRandomInt(1,6);
+    enemy.textContent = getRandomInt(1,6);
+    if(rolls>12){
+      clearInterval(roll);
+      const p = +player.textContent, e = +enemy.textContent;
+      if (p>e) gameStatus.textContent = `Ты победил 🎉 (${p} против ${e})`;
+      else if (p<e) gameStatus.textContent = `Проигрыш 😢 (${p} против ${e})`;
+      else gameStatus.textContent = `Ничья (${p} = ${e})`;
+      setTimeout(()=>callback(p>e),1200);
+    }
+  },100);
+}
+
+/* === ИГРА: ОРЕЛ И РЕШКА === */
+function animateCoin(callback){
+  gameVisual.innerHTML = `
+    <div class="choose-side">
+      <button class="side-btn" data-side="Орел">Орел</button>
+      <button class="side-btn" data-side="Решка">Решка</button>
+    </div>`;
+  gameStatus.textContent = "Выбери сторону!";
+  const buttons = gameVisual.querySelectorAll(".side-btn");
+
+  buttons.forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const chosen = b.dataset.side;
+      gameStatus.textContent = "Бросаем монету...";
+      gameVisual.innerHTML = `<div class="coin-flip"></div>`;
+      const coin = gameVisual.querySelector(".coin-flip");
+      coin.classList.add("spinning");
+
+      setTimeout(()=>{
+        coin.classList.remove("spinning");
+        const side = Math.random()<0.5 ? "Орел" : "Решка";
+        coin.textContent = side;
+        gameStatus.textContent = side === chosen ? "🎉 Ты угадал!" : "😢 Мимо!";
+        setTimeout(()=>callback(side === chosen),1000);
+      },2500);
+    }, { once: true });
+  });
+}
+
+/* === ИГРА: РУЛЕТКА === */
+function animateRoulette(callback){
+  gameVisual.innerHTML = `
+    <div class="choose-color">
+      <button class="color-btn Yellow">Желтый</button>
+      <button class="color-btn black">Чёрный</button>
+    </div>`;
+  gameStatus.textContent = "Выбери цвет!";
+  const buttons = gameVisual.querySelectorAll(".color-btn");
+
+  buttons.forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const choice = b.classList.contains("red") ? "red" : "black";
+      gameVisual.innerHTML = `<div class="roulette-wheel"></div>`;
+      const wheel = gameVisual.querySelector(".roulette-wheel");
+      let deg = 0;
+      const spin = setInterval(()=>{ deg += 20; wheel.style.transform = `rotate(${deg}deg)`; },40);
+      gameStatus.textContent = "Крутится колесо...";
+
+      setTimeout(()=>{
+        clearInterval(spin);
+        const isRed = Math.random() < 0.5;
+        gameStatus.textContent = isRed ? "Желтый!" : "Чёрный!";
+        const win = (isRed && choice==="red") || (!isRed && choice==="black");
+        setTimeout(()=>callback(win),1200);
+      },2500);
+    }, { once: true });
+  });
+}
+
+/* === НАГРАДЫ === */
+function getRandomReward(){
+  const roll = Math.random()*100;
+  let sum = 0;
+  for(const item of rewardsPool){
+    sum += item.chance;
+    if(roll<sum) return item.reward;
+  }
+  return null;
+}
+
+function applyReward(reward,game){
+  let imgSrc="";
+  switch(reward.type){
+    case "coin": coinBalance+=reward.amount; localStorage.setItem("coinBalance",coinBalance); imgSrc="Coin.png"; break;
+    case "ticket": ticketBalance+=reward.amount; localStorage.setItem("ticketBalance",ticketBalance); imgSrc="ticket.png"; break;
+    case "usdt": usdtBalance=+(usdtBalance+reward.amount).toFixed(2); localStorage.setItem("usdtBalance",usdtBalance); imgSrc="USDT.png"; break;
+    case "ton": tonBalance=+(tonBalance+reward.amount).toFixed(2); localStorage.setItem("tonBalance",tonBalance); imgSrc="Toncoin.png"; break;
+  }
+  updateAllBalances();
+  showRewardModal("🎉 Победа!", `<img src="${imgSrc}" class="reward-icon"> +${reward.amount} ${reward.type.toUpperCase()}`);
+  addTransaction(reward.amount,reward.type.toUpperCase(),"reward","-","-",`Игра: ${getGameName(game)}`);
+}
+
+/* === ВСПОМОГАТЕЛЬНЫЕ === */
+function getGameName(id){
+  switch(id){
+    case "cups": return "Стаканчики";
+    case "dice": return "Кубики";
+    case "coinflip": return "Орел и решка";
+    case "roulette": return "Рулетка";
+    default: return "Игра";
+  }
+}
+function showRewardModal(title,html){
+  rewardTitle.innerHTML=title;
+  rewardAmountEl.innerHTML=html;
+  rewardModal.classList.add("open");
+}
+closeRewardBtn.addEventListener("click",()=>rewardModal.classList.remove("open"));
+function getRandomInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================== Initial load =========================== */
+document.addEventListener('DOMContentLoaded', ()=>{
+    // Запуск логики покупок после загрузки DOM
+    initTicketPurchase(); 
+
+    // Прочее
+    generateComboCards(); // Убеждаемся, что карточки генерируются
+    initComboState();
+    
+    adsCount = parseInt(localStorage.getItem('adsCount')) || 0;
+    document.getElementById('ads-count').textContent = adsCount;
+    document.getElementById('ads-progress-bar-inner').style.width = (adsCount/maxAds*100) + '%';
+    
+    // ФИКС: Явно включаем кнопку промокода при загрузке страницы
+    const promoButton = document.getElementById('promo-apply');
+    if (promoButton) {
+        promoButton.disabled = false;
+    }
+});
+
+
+/* === Premium Tasks Logic (с проверкой выполнения) === */
+function showTaskMessage(msg, color="#ffd700") {
+  const div = document.createElement('div');
+  div.textContent = msg;
+  div.style.position = 'fixed';
+  div.style.bottom = '90px';
+  div.style.left = '50%';
+  div.style.transform = 'translateX(-50%)';
+  div.style.background = 'linear-gradient(145deg, rgba(0,0,0,0.9), rgba(30,30,30,0.95))';
+  div.style.border = `1px solid ${color}`;
+  div.style.color = color;
+  div.style.padding = '10px 20px';
+  div.style.borderRadius = '12px';
+  div.style.fontWeight = '600';
+  div.style.boxShadow = `0 0 15px ${color}55`;
+  div.style.zIndex = '9999';
+  div.style.opacity = '0';
+  div.style.transition = 'opacity .3s ease, transform .3s ease';
+  document.body.appendChild(div);
+  setTimeout(() => { div.style.opacity = '1'; div.style.transform = 'translate(-50%, -10px)'; }, 50);
+  setTimeout(() => { div.style.opacity = '0'; div.style.transform = 'translate(-50%, 20px)'; }, 2000);
+  setTimeout(() => div.remove(), 2500);
+}
+
+document.querySelectorAll('#tab-3 .task-item').forEach(item => {
+  const task = item.dataset.task;
+  const checkBtn = item.querySelector('.btn-check');
+  const doneBtn = item.querySelector('.btn-done');
+
+  // Когда нажали "Перейти", "Играть" или "Смотреть" → фиксируем попытку выполнения
+  if (checkBtn) {
+    checkBtn.addEventListener('click', () => {
+      localStorage.setItem('task_' + task, 'in-progress');
+      showTaskMessage('🔄 Задание запущено — проверь выполнение позже');
+    });
+  }
+
+  // Проверка выполнения
+  if (doneBtn) {
+    doneBtn.addEventListener('click', () => {
+      const status = localStorage.getItem('task_' + task);
+
+      if (!status) {
+        showTaskMessage('⚠️ Сначала перейди по ссылке или выполни действие!', '#ff5555');
+        return;
+      }
+
+      if (status === 'done') {
+        showTaskMessage('ℹ️ Задание уже выполнено', '#999');
+        return;
+      }
+
+      // Эмуляция проверки выполнения
+      doneBtn.disabled = true;
+      doneBtn.textContent = '⏳ Проверка...';
+
+      setTimeout(() => {
+        // Проверка прошла успешно
+        localStorage.setItem('task_' + task, 'done');
+        doneBtn.textContent = '✅ Выполнено';
+        doneBtn.style.opacity = '0.6';
+        doneBtn.style.cursor = 'default';
+
+        // Определяем награду
+        let reward = 1;
+        if (task === 'daily-combo' || task === 'labrador') reward = 5;
+
+        // Добавляем награду
+        let coinBalance = parseInt(localStorage.getItem('coinBalance') || 0);
+        coinBalance += reward;
+        localStorage.setItem('coinBalance', coinBalance);
+
+        if (typeof updateAllBalances === 'function') updateAllBalances();
+        if (typeof createCurrencyAnimation === 'function') createCurrencyAnimation('coin', reward);
+        if (typeof addTransaction === 'function') addTransaction(reward, 'Coin', 'reward', '-', '-', 'Задания');
+
+        showTaskMessage(`💰 +${reward} Coin за выполнение`);
+      }, 1500);
+    });
+  }
+
+  // Восстанавливаем состояние после перезагрузки
+  const saved = localStorage.getItem('task_' + task);
+  if (saved === 'done') {
+    doneBtn.textContent = '✅ Выполнено';
+    doneBtn.disabled = true;
+    doneBtn.style.opacity = '0.6';
+  }
+});
+
+
+
+
+/* Ensure balances reflect initial state */
+updateAllBalances();
+
+// ОТОБРАЖАЕМ ИСТОРИЮ ПРИ ЗАГРУЗКЕ
+renderTransactionHistory(); 
+
+ // TonConnect (небольшой рефакторинг для избежания дублирования)
+  const tonConnectInstance = new TonConnect.TonConnect({
+    manifestUrl: "https://yourdomain.com/tonconnect-manifest.json" // замени на свой URL
+  });
+
+  let connectedWallet = null;
+
+  // Оставлено, чтобы избежать ошибок, если где-то в HTML есть старая кнопка 'connect-wallet'
+  // if (document.getElementById('connect-wallet')) {
+  //   document.getElementById('connect-wallet').addEventListener('click', async () => {
+  //     try {
+  //       connectedWallet = await tonConnectInstance.connect();
+  //       document.getElementById('wallet-address').textContent = connectedWallet.account.address;
+  //       // updateBalance();
+  //     } catch (e) {
+  //       console.error(e);
+  //     }
+  //   });
+  // }
+</script>
+</body>
+</html>
+
+
